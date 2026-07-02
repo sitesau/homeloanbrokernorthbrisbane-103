@@ -1,0 +1,16 @@
+{
+  "wheel_id": 8,
+  "slug": "homeloanbrokernorthbrisbane-103",
+  "project": "homeloanbrokernorthbrisbane-103",
+  "parent_t1_ref": "homeloanbrokernorthbrisbane-001",
+  "money_target": "homeloanbrokernorthbrisbane.com.au",
+  "primary_kw": "refinancing home loan north brisbane",
+  "intended_url": "https://homeloanbrokernorthbrisbane-103.s3.ap-southeast-2.amazonaws.com/refinancing-home-loan-north-brisbane.html",
+  "links": [
+    {
+      "target_url": "https://first-home-buyer-loan-north-brisbane-w8.pages.dev/",
+      "anchor": "first home buyer loan north brisbane",
+      "rel": "follow"
+    }
+  ]
+}
