@@ -5,7 +5,7 @@ name: t2-deploy-writeback
 # git-write SSH key (blast radius = git-write only if the VPS is compromised).
 # Host creds live in this repo's Action secrets. After deploy, polls for a
 # real HTTP 200, then does the DB writeback. NEVER writes DB before a
-# confirmed-live check (evidence gate -- see docs/system/t2plus-automation-spec.md
+# confirmed-live check (evidence gate — see docs/system/t2plus-automation-spec.md
 # §6.0, 2026-07-01 bake-off finding: a free model called wheel-done having
 # built nothing).
 #
@@ -234,11 +234,11 @@ jobs:
           [ -n "$RENDER_API_KEY" ] || { echo "::error::RENDER_API_KEY missing"; exit 1; }
           PROJECT="${{ steps.meta.outputs.project }}"
           REPO_URL="https://github.com/${{ github.repository }}"
-          SVCID="$(curl -s -m 25 -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+          SVCID="$(curl -s -m 25 -H "Authorization: Bearer $RENDER_API_KEY" \
             "https://api.render.com/v1/services?name=$PROJECT&type=static_site&limit=1" \
             | jq -r '.[0].service.id // empty')"
           if [ -z "$SVCID" ]; then
-            RESP="$(curl -s -m 40 -X POST -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            RESP="$(curl -s -m 40 -X POST -H "Authorization: Bearer $RENDER_API_KEY" \
               -H "Content-Type: application/json" "https://api.render.com/v1/services" -d @- <<JSON
           {"type":"static_site","name":"$PROJECT",
            "repo":"$REPO_URL","branch":"main","autoDeploy":"yes",
@@ -248,7 +248,7 @@ jobs:
             SVCID="$(echo "$RESP" | jq -r '(.service.id // .id) // empty')"
             [ -n "$SVCID" ] || { echo "::error::Render create failed: $(echo "$RESP" | head -c 300)"; exit 1; }
           else
-            curl -s -m 25 -X POST -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            curl -s -m 25 -X POST -H "Authorization: Bearer $RENDER_API_KEY" \
               "https://api.render.com/v1/services/$SVCID/deploys" -d '{}' >/dev/null 2>&1 || true
           fi
           echo "render_service_id=$SVCID" >> "$GITHUB_OUTPUT" 2>/dev/null || true
@@ -256,8 +256,8 @@ jobs:
       - name: Deploy (digitalocean)
         # Same simplification as Render: DO App Platform builds straight from
         # THIS repo (already public, content already committed) -- no second
-        # standalone repo needed. Own-host root, IndexNow applies. Proven live
-        # 2026-07-02 via the local script; ported + simplified here.
+        # standalone repo needed. Own-host root, IndexNow applies. Proven
+        # live 2026-07-02 via the local script; ported + simplified here.
         # NOTE: unlike every other host, DO's live URL is NOT predictable
         # from the project name (random suffix, e.g. do-host-probe-h7zoq.
         # ondigitalocean.app) -- .wheel-meta.json's intended_url cannot be
@@ -365,8 +365,8 @@ jobs:
           git init -q -b gh-pages
           git -c user.name=hermes-t2 -c user.email=hermes@sitesau.local add -A
           git -c user.name=hermes-t2 -c user.email=hermes@sitesau.local commit -q -m "deploy"
-          git push --force "https://x-access-token:${CLOUDSITES_PAT}@github.com/${{ github.repository }}.git" gh-pages:gh-pages
-          PAGES_TOKEN="${CLOUDSITES_PAT}"
+          git push --force "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" gh-pages:gh-pages
+          PAGES_TOKEN="${CLOUDSITES_PAT:-$GH_TOKEN}"
           curl -s -w '\nHTTP=%{http_code}\n' -X POST "https://api.github.com/repos/${{ github.repository }}/pages" \
             -H "Authorization: Bearer $PAGES_TOKEN" -H "Accept: application/vnd.github+json" \
             -d '{"source":{"branch":"gh-pages","path":"/"}}'
@@ -437,7 +437,7 @@ jobs:
           live_url="${{ steps.verify.outputs.live_url }}"
           wheel_id="${{ steps.meta.outputs.wheel_id }}"
           rest="$SUPABASE_URL/rest/v1"
-          # deploy.* tables live outside PostgREST's default 'public' schema --
+          # deploy.* tables live outside PostgREST's default 'public' schema —
           # Accept-Profile (GET/DELETE) / Content-Profile (POST/PATCH) select it.
           # --retry: this step saw intermittent transient connection failures
           # (exit 6 / exit 22) on brand-new repos during testing 2026-07-02 --
